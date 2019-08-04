@@ -1,40 +1,37 @@
 package com.study.parsingweb.service.impl;
 
+import com.study.parsingweb.constants.ParsingOption;
 import com.study.parsingweb.service.ParsingWebService;
-
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
-@Service
 @Slf4j
+@Service
 public class ParsingWebServiceImpl implements ParsingWebService {
-
-    enum PARSING_OPTION{
-        WHOLE_HTML,
-        EXCEPT_TAG
-    }
 
     private int charactors[];
 
-    public ParsingWebServiceImpl(){
-        charactors = new int[128];
-    }
+    private URLConnection connection;
+
+    //    public ParsingWebServiceImpl(){
+//        charactors = new int[128];
+//    }
+
 
     @Override
     public String urlParsing(String urlPath, String parsingOption, int wrapUnit) {
         String tagPattern = "<.*?>(.*?)</.*>";
         StringBuilder stringBuilder = new StringBuilder();
         try{
-            URL url = new URL(urlPath);
-            URLConnection connection = url.openConnection();
             InputStreamReader inputStreamReader = new InputStreamReader (connection.getInputStream(), "utf-8");
             BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
             String content = "";
@@ -50,6 +47,57 @@ public class ParsingWebServiceImpl implements ParsingWebService {
         }
         log.info(mixAndSort(stringBuilder.toString()));
         return null;
+    }
+
+    @Override
+    public boolean connectWeb(String urlPath) {
+        try {
+            URL url = new URL(urlPath);
+            connection = url.openConnection();
+        } catch (IOException e) {
+            e.getStackTrace();
+        }
+        return ObjectUtils.isEmpty(connection);
+    }
+
+    @Override
+    public String extractContent(ParsingOption parsingOption) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            InputStreamReader inputStreamReader = new InputStreamReader(connection.getInputStream(),
+                StandardCharsets.UTF_8);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String content;
+            while ((content = bufferedReader.readLine()) != null) {
+                content = StringUtils.trimAllWhitespace(content);
+                if (!StringUtils.isEmpty(content)) {
+                    if (parsingOption.equals(ParsingOption.WHOLE_HTML)) {
+//                        content.
+                    }
+                    stringBuilder.append(content);
+                }
+            }
+            inputStreamReader.close();
+            bufferedReader.close();
+        } catch (IOException e) {
+            e.getStackTrace();
+        }
+        return stringBuilder.toString();
+    }
+
+    @Override
+    public boolean sortContent(String content) {
+        return false;
+    }
+
+    @Override
+    public void diviedContent(String content) {
+
+    }
+
+    @Override
+    public void printResultAndRest(String content) {
+
     }
 
     private String mixAndSort(String html){
